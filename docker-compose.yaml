@@ -1,0 +1,13 @@
+version: "3.1"
+
+services:
+  pdf-generator:
+    container_name: pdf-generator
+    restart: always
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: pdf-generator
+    ports:
+      - "8656:8080"
+

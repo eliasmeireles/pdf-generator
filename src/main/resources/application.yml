@@ -1,0 +1,6 @@
+micronaut:
+  application:
+    name: pdf-generator
+  server:
+    port: ${PORT:8080}
+    context-path: /api/pdf-generator
