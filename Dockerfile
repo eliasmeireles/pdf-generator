@@ -19,14 +19,13 @@ RUN apt-get install -y google-chrome-stable
 ENV CHROMEDRIVER_VERSION "114.0.5735.90"
 ENV CHROMEDRIVER_DIR /chromedriver
 RUN mkdir $CHROMEDRIVER_DIR
+
 # Download and install Chromedriver
 RUN wget -q --continue -P $CHROMEDRIVER_DIR "http://chromedriver.storage.googleapis.com/$CHROMEDRIVER_VERSION/chromedriver_linux64.zip"
 RUN unzip $CHROMEDRIVER_DIR/chromedriver* -d $CHROMEDRIVER_DIR
 
 # Put Chromedriver into the PATH
 ENV PATH $CHROMEDRIVER_DIR:$PATH
-
-ENV webdriver.chrom.driver $CHROMEDRIVER_DIR/chromedriver
 
 COPY --from=builder /app/build/libs/pdf-generator-1.0.0-all.jar /app.jar
 

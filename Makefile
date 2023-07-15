@@ -6,3 +6,9 @@ down:
 	docker-compose down
 connect:
 	docker exec -it pdf-generator /bin/bash
+
+test:
+	./gradlew clean test
+
+build:
+	./gradlew clean shadowJar
