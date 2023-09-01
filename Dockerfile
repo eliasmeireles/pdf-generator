@@ -1,31 +1,39 @@
-FROM gradle:jdk19 AS builder
+# First, update the build image to one that includes JDK 19:
+FROM gradle:jdk17 AS builder
 WORKDIR /app
-
-RUN mkdir -p /app
 
 COPY . /app/
 
 RUN gradle clean shadowJar
 
-FROM gradle:jdk19
+# Then, in the final image, manually install JDK 19:
+FROM centos:latest
 
-RUN apt-get update && apt-get install -y gnupg
+ENV CHROME_VERSION="114.0.5735.133"
+ENV JAVA_HOME="/usr/java/jdk-19/"
 
-RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
-RUN sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'
-RUN apt-get -y update
-RUN apt-get install -y google-chrome-stable
+RUN sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-*
+RUN sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*
 
-ENV CHROMEDRIVER_VERSION "114.0.5735.90"
-ENV CHROMEDRIVER_DIR /chromedriver
-RUN mkdir $CHROMEDRIVER_DIR
+RUN yum update -y
 
-# Download and install Chromedriver
-RUN wget -q --continue -P $CHROMEDRIVER_DIR "http://chromedriver.storage.googleapis.com/$CHROMEDRIVER_VERSION/chromedriver_linux64.zip"
-RUN unzip $CHROMEDRIVER_DIR/chromedriver* -d $CHROMEDRIVER_DIR
+RUN yum install -y wget  java-17-openjdk
 
-# Put Chromedriver into the PATH
-ENV PATH $CHROMEDRIVER_DIR:$PATH
+# Downloading JDK 19 (replace the URL with the correct one when it becomes available)
+# RUN wget --no-cookies --no-check-certificate "https://rpmfind.net/linux/openmandriva/cooker/repository/x86_64/main/release/java-19-openjdk-19.0.2.7-1-omv2390.x86_64.rpm" -O /tmp/jdk19.rpm
+
+# Install Java 19 and remove the downloaded file to clean up
+# RUN yum install -y /tmp/jdk19.rpm && rm /tmp/jdk19.rpm
+
+# Add Java to PATH
+ENV PATH=$PATH:$JAVA_HOME/bin
+
+RUN wget https://dl.google.com/linux/chrome/rpm/stable/x86_64/google-chrome-stable-${CHROME_VERSION}-1.x86_64.rpm
+RUN yum localinstall -y google-chrome-stable-${CHROME_VERSION}-1.x86_64.rpm
+
+RUN curl --version
+
+RUN curl https://dl.google.com/linux/chrome/rpm/stable/x86_64/google-chrome-stable-${CHROME_VERSION}-1.x86_64.rpm --output chrome.rpm
 
 COPY --from=builder /app/build/libs/pdf-generator-1.0.0-all.jar /app.jar
 

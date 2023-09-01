@@ -8,6 +8,10 @@ services:
       context: .
       dockerfile: Dockerfile
     image: pdf-generator
+    deploy:
+      resources:
+        limits:
+          memory: 254M
     ports:
       - "8656:8080"
 
