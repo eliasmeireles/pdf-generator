@@ -9,7 +9,7 @@ RUN gradle clean shadowJar
 # Then, in the final image, manually install JDK 19:
 FROM centos:latest
 
-ENV CHROME_VERSION="114.0.5735.133"
+ENV CHROME_VERSION="119.0.6045.105"
 ENV JAVA_HOME="/usr/java/jdk-19/"
 
 RUN sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-*

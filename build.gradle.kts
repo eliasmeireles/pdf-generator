@@ -22,7 +22,7 @@ repositories {
 dependencies {
     ksp("io.micronaut.serde:micronaut-serde-processor")
     implementation("io.micronaut.kotlin:micronaut-kotlin-runtime")
-    implementation("org.seleniumhq.selenium:selenium-java:4.10.0")
+    implementation("org.seleniumhq.selenium:selenium-java:4.15.0")
     implementation("io.micronaut.serde:micronaut-serde-jackson")
     implementation("org.jetbrains.kotlin:kotlin-reflect:${kotlinVersion}")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:${kotlinVersion}")
