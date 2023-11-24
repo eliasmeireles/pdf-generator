@@ -22,13 +22,8 @@ EXPOSE $3100
 RUN chmod a+x /usr/lib64/chromium-browser
 
 COPY --from=builder /app/lib/ /opt/app/
+COPY ./bootApp /
 COPY ./pdf-node/yarn.lock /opt/app/
 COPY ./pdf-node/package.json /opt/app/
 
-RUN yarn install --production
-
-#CMD node app.js
-
-CMD java -jar /app.jar
-
-#CMD ["/usr/bin/supervisord"]
+CMD sh /bootApp
