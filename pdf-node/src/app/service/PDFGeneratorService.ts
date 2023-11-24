@@ -28,6 +28,17 @@ class PDFGeneratorService {
                 await page.waitForSelector(ele, {timeout: Number(pageLoadConfig.elementsWaitTimeout ?? 0)});
             }
 
+            try {
+                const lastElement = await page.evaluateHandle(() => document.body.lastElementChild);
+
+                const elementId = await page.evaluate(el => el.id, lastElement);
+                if (elementId && elementId.includes('SvgjsSvg')) {
+                    await page.evaluate(el => el.remove(), lastElement);
+                }
+            } catch (error) {
+                console.log('Failed to remove element:', error);
+            }
+
             const pdf = await page.pdf({format: pageLoadConfig.format ?? 'A4'});
 
             await browser.close();

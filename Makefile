@@ -10,5 +10,5 @@ connect:
 test:
 	./gradlew clean test
 
-build:
+rebuild:
 	./gradlew clean shadowJar

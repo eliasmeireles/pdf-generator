@@ -8,14 +8,16 @@
     "moduleResolution": "node",
     "sourceMap": true,
     "rootDir": "src",
-    "outDir": "dist",
+    "outDir": "lib",
     "baseUrl": ".",
     "types": ["node"],
     "paths": {
-      "*": ["node_modules/**/*"]
+      "*": [
+        "node_modules/*"
+      ]
     },
     "typeRoots": ["node_modules/@types"],
-    "skipLibCheck": true,
+    "skipLibCheck": true
   },
   "include": ["src/**/*"]
 }

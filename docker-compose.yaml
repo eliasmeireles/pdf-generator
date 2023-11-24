@@ -14,4 +14,5 @@ services:
           memory: 254M
     ports:
       - "8656:8080"
+      - "3100:3100"
 

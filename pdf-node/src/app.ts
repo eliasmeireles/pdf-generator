@@ -1,6 +1,9 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const {PDFGenerate} = require("./app/router/Router");
+import express from "express";
+
+import bodyParser from "body-parser";
+
+import {PDFGenerate} from "./app/router/Router";
+
 const app = express();
 
 app.use(bodyParser.json({limit: '100mb'}));

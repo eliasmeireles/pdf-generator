@@ -5,41 +5,47 @@ import io.micronaut.http.HttpResponse
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Produces
-import org.openqa.selenium.OutputType
-import org.openqa.selenium.chrome.ChromeDriver
-import org.openqa.selenium.chrome.ChromeOptions
-import org.openqa.selenium.print.PrintOptions
+import okhttp3.ResponseBody
 import org.slf4j.LoggerFactory
+import retrofit2.Call
+import retrofit2.Retrofit
+import retrofit2.converter.jackson.JacksonConverterFactory
+import retrofit2.converter.scalars.ScalarsConverterFactory
+import retrofit2.http.Body
+import retrofit2.http.POST
+
+data class PrintRequest(val targetUrl: String)
+
+interface RetrofitService {
+    @POST("/")
+    fun doPost(@Body printRequest: PrintRequest): Call<ResponseBody>
+}
+
 
 @Controller("/")
 class PdfGeneratorController {
 
-    private val options = ChromeOptions()
-    private val printOptions = PrintOptions()
+    private val retrofit: Retrofit = Retrofit.Builder()
+        .baseUrl("http://127.0.0.1:3100")
+        .addConverterFactory(JacksonConverterFactory.create())
+        .addConverterFactory(ScalarsConverterFactory.create())
+        .build()
 
-    init {
-        options.addArguments("--no-sandbox")
-        options.addArguments("--headless")
-        options.addArguments("--disable-dev-shm-usage")
-        options.addArguments("--remote-allow-origins=*")
-
-        printOptions.orientation = PrintOptions.Orientation.LANDSCAPE
-        printOptions.shrinkToFit = false
-    }
+    private val service = retrofit.create(RetrofitService::class.java)
 
     @Get
     @Produces(value = ["application/pdf"])
     fun summary(@Parameter url: String): HttpResponse<ByteArray> {
-        LoggerFactory.getLogger(javaClass).info("Generating pdf from {}", url)
+        val logger = LoggerFactory.getLogger(javaClass)
 
-        val drive = ChromeDriver(options)
+        logger.info("Generating pdf from {}", url)
 
-        drive.run { get(url) }
-
-        Thread.sleep(2000)
-
-        val print = drive.print(printOptions)
-        drive.close()
-        return HttpResponse.ok(OutputType.BYTES.convertFromBase64Png(print.content))
+        val response = service.doPost(PrintRequest(targetUrl = url)).execute()
+        return if (response.isSuccessful) {
+            HttpResponse.ok(response.body()?.bytes())
+        } else {
+            logger.info("Generating pdf from {} with error {}", url, response.errorBody())
+            HttpResponse.unprocessableEntity()
+        }
     }
 }

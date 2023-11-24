@@ -1,15 +1,15 @@
 # First, update the build image to one that includes JDK 19:
-FROM gradle:jdk17 AS builder
+FROM gradle:jdk19 AS builder
 WORKDIR /app
 
 COPY . /app/
 
 RUN gradle clean shadowJar
 
-# Then, in the final image, manually install JDK 19:
 FROM centos:latest
 
-ENV CHROME_VERSION="119.0.6045.105"
+WORKDIR pdf-server
+
 ENV JAVA_HOME="/usr/java/jdk-19/"
 
 RUN sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-*
@@ -17,28 +17,31 @@ RUN sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|
 
 RUN yum update -y
 
-RUN yum install -y wget  java-17-openjdk
-
-# Downloading JDK 19 (replace the URL with the correct one when it becomes available)
-# RUN wget --no-cookies --no-check-certificate "https://rpmfind.net/linux/openmandriva/cooker/repository/x86_64/main/release/java-19-openjdk-19.0.2.7-1-omv2390.x86_64.rpm" -O /tmp/jdk19.rpm
-
-# Install Java 19 and remove the downloaded file to clean up
-# RUN yum install -y /tmp/jdk19.rpm && rm /tmp/jdk19.rpm
+RUN yum install -y wget
 
 # Add Java to PATH
 ENV PATH=$PATH:$JAVA_HOME/bin
 
-RUN wget https://dl.google.com/linux/chrome/rpm/stable/x86_64/google-chrome-stable-${CHROME_VERSION}-1.x86_64.rpm
-RUN yum localinstall -y google-chrome-stable-${CHROME_VERSION}-1.x86_64.rpm
+RUN mkdir -p "$JAVA_HOME"
+RUN wget https://download.java.net/java/GA/jdk19.0.1/afdd2e245b014143b62ccb916125e3ce/10/GPL/openjdk-19.0.1_linux-x64_bin.tar.gz
+RUN tar xvf openjdk-19.0.1_linux-x64_bin.tar.gz
+RUN mv jdk-19.0.1/* "$JAVA_HOME"
 
-RUN curl --version
-
-RUN curl https://dl.google.com/linux/chrome/rpm/stable/x86_64/google-chrome-stable-${CHROME_VERSION}-1.x86_64.rpm --output chrome.rpm
+RUN curl -sL https://rpm.nodesource.com/setup_20.x | bash -
+RUN yum install -y nodejs
+RUN curl --silent --location https://dl.yarnpkg.com/rpm/yarn.repo | tee /etc/yum.repos.d/yarn.repo
+RUN yum install -y yarn
 
 COPY --from=builder /app/build/libs/pdf-generator-1.0.0-all.jar /app.jar
+COPY ./pdf-node/lib/ /pdf-server
+COPY ./pdf-node/package.json /pdf-server/
+COPY ./boot /pdf-server/
 
 ENV PORT 8080
 
 EXPOSE $PORT
+EXPOSE $3100
 
-CMD java -jar /app.jar
+RUN yarn install --production
+
+CMD sh ./boot
