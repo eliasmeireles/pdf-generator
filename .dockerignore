@@ -14,6 +14,7 @@ out/
 .settings
 .classpath
 .factorypath
-node_modules/
+.node_modules/
 .eslintcache
 npm-debug.log*
+build

@@ -1,8 +1,9 @@
 #!/bin/sh
 
-nohup node app.js &
+yarn install --production
 
-sleep 5
+#nohup yarn start &
+
 #
 #counter=0
 #

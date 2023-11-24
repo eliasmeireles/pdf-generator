@@ -3,13 +3,34 @@ import {Request, Response} from 'express';
 
 import puppeteer from "puppeteer";
 
+const isDockerContainer = process.env.PUPPETEER_DOCKER
+
 class PDFGeneratorService {
 
     async PDFGenerator(req: Request, res: Response) {
         try {
+            const options = {
+                headless: true,
+                args: [
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-dev-shm-usage',
+                    '--disable-accelerated-2d-canvas',
+                    '--no-first-run',
+                    '--no-zygote',
+                    '--single-process',
+                    '--disable-gpu',
+                ],
+            }
+
+            if (isDockerContainer) {
+                console.log('App running under a container. Add /usr/bin/chromium-browser on config options.')
+                options['executablePath'] = '/usr/lib64/chromium-browser'
+            }
+
             const pageLoadConfig = this.getPageLoadConfig(req)
 
-            const browser = await puppeteer.launch({headless: true});
+            const browser = await puppeteer.launch(options);
             const page = await browser.newPage();
 
             if (pageLoadConfig.htmlBase64) {
@@ -46,6 +67,7 @@ class PDFGeneratorService {
             res.setHeader('Content-Type', 'application/pdf');
             res.send(pdf);
         } catch (err) {
+            console.log(err)
             res.status(500).send({error: 'Failed to generate PDF'});
         }
     }

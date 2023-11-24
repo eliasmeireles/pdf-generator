@@ -1,5 +1,4 @@
 import express from "express";
-
 import bodyParser from "body-parser";
 
 import {PDFGenerate} from "./app/router/Router";

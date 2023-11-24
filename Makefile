@@ -12,3 +12,6 @@ test:
 
 rebuild:
 	./gradlew clean shadowJar
+
+pdf-server:
+	docker build -t pdf-server -f DockerfileBuilder .

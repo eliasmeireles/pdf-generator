@@ -40,12 +40,17 @@ class PdfGeneratorController {
 
         logger.info("Generating pdf from {}", url)
 
-        val response = service.doPost(PrintRequest(targetUrl = url)).execute()
-        return if (response.isSuccessful) {
-            HttpResponse.ok(response.body()?.bytes())
-        } else {
-            logger.info("Generating pdf from {} with error {}", url, response.errorBody())
-            HttpResponse.unprocessableEntity()
+        try {
+            val response = service.doPost(PrintRequest(targetUrl = url)).execute()
+            return if (response.isSuccessful) {
+                HttpResponse.ok(response.body()?.bytes())
+            } else {
+                logger.error("Generating pdf from {} with error {}", url, response.message())
+                HttpResponse.unprocessableEntity()
+            }
+        } catch (err: Exception) {
+            logger.error("Generating pdf from {} with error {}", url, err)
         }
+        return HttpResponse.unprocessableEntity()
     }
 }
