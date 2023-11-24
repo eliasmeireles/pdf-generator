@@ -14,3 +14,7 @@ out/
 .settings
 .classpath
 .factorypath
+node_modules/
+.eslintcache
+npm-debug.log*
+construo-bucket.json
