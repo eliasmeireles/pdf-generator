@@ -1,7 +1,9 @@
 import {PageLoadConfig} from "../model/PageLoadConfig";
 import {Request, Response} from 'express';
 
+
 import puppeteer, {Browser, PuppeteerLaunchOptions} from "puppeteer";
+const  logger =  require("../util/logger");
 
 const isDockerContainer = process.env.PUPPETEER_DOCKER
 
@@ -24,7 +26,6 @@ class PDFGeneratorService {
 
 
         if (isDockerContainer) {
-            console.log('App running under a container. Add /usr/bin/chromium-browser on config options.')
             options['executablePath'] = '/usr/lib64/chromium-browser/chromium-browser'
         }
 
@@ -48,6 +49,11 @@ class PDFGeneratorService {
                 await page.goto(pageLoadConfig.targetUrl, {waitUntil: 'networkidle0'});
             } else {
                 res.status(400).send({error: 'Needs to set targetUrl or htmlBase64'});
+                logger.newrelic({
+                    level: 'ERROR',
+                    transactionSubType: 'pdf-generator-content-not-set',
+                    message: 'Invalid request data',
+                })
                 return
             }
 
@@ -63,7 +69,12 @@ class PDFGeneratorService {
                     await page.evaluate(el => el.remove(), lastElement);
                 }
             } catch (error) {
-                console.log('Failed to remove element:', error);
+                logger.newrelic({
+                    level: 'ERROR',
+                    transactionSubType: 'pdf-generator-element-rm',
+                    message: 'Failed to remove element:',
+                    error: error
+                })
             }
 
             const pdf = await page.pdf({format: pageLoadConfig.format ?? 'A4'});
@@ -72,8 +83,18 @@ class PDFGeneratorService {
 
             res.setHeader('Content-Type', 'application/pdf');
             res.send(pdf);
+            logger.newrelic({
+                level: 'INFO',
+                transactionSubType: 'pdf-generator-content-generated',
+                message: 'New PDF generated succesfful.',
+            })
         } catch (err) {
-            console.log(err)
+            logger.newrelic({
+                level: 'ERROR',
+                transactionSubType: 'pdf-generator-error',
+                message: 'Failed to generate PDF',
+                error: err
+            })
             res.status(500).send({error: 'Failed to generate PDF'});
         }
     }
