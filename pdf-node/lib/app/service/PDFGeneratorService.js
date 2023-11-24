@@ -38,29 +38,34 @@ class PDFGeneratorService {
     constructor() {
         this.getPageLoadConfig = (req) => req.body;
     }
+
+    createBrowser() {
+        const options = {
+            headless: true,
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-accelerated-2d-canvas',
+                '--no-first-run',
+                '--no-zygote',
+                '--single-process',
+                '--disable-gpu',
+            ],
+        };
+        if (isDockerContainer) {
+            console.log('App running under a container. Add /usr/bin/chromium-browser on config options.');
+            options['executablePath'] = '/usr/lib64/chromium-browser/chromium-browser';
+        }
+        return puppeteer_1.default.launch(options);
+    }
+
     PDFGenerator(req, res) {
         var _a, _b, _c;
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const options = {
-                    headless: true,
-                    args: [
-                        '--no-sandbox',
-                        '--disable-setuid-sandbox',
-                        '--disable-dev-shm-usage',
-                        '--disable-accelerated-2d-canvas',
-                        '--no-first-run',
-                        '--no-zygote',
-                        '--single-process',
-                        '--disable-gpu',
-                    ],
-                };
-                if (isDockerContainer) {
-                    console.log('App running under a container. Add /usr/bin/chromium-browser on config options.');
-                    options['executablePath'] = '/usr/lib64/chromium-browser';
-                }
                 const pageLoadConfig = this.getPageLoadConfig(req);
-                const browser = yield puppeteer_1.default.launch(options);
+                const browser = yield this.createBrowser();
                 const page = yield browser.newPage();
                 if (pageLoadConfig.htmlBase64) {
                     const htmlContent = Buffer.from(pageLoadConfig.htmlBase64, 'base64').toString('utf8');

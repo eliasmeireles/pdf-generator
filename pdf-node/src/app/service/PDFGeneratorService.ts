@@ -1,36 +1,42 @@
 import {PageLoadConfig} from "../model/PageLoadConfig";
 import {Request, Response} from 'express';
 
-import puppeteer from "puppeteer";
+import puppeteer, {Browser, PuppeteerLaunchOptions} from "puppeteer";
 
 const isDockerContainer = process.env.PUPPETEER_DOCKER
 
 class PDFGeneratorService {
 
+    createBrowser(): Promise<Browser> {
+        const options = {
+            headless: true,
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-accelerated-2d-canvas',
+                '--no-first-run',
+                '--no-zygote',
+                '--single-process',
+                '--disable-gpu',
+            ],
+        } as PuppeteerLaunchOptions
+
+
+        if (isDockerContainer) {
+            console.log('App running under a container. Add /usr/bin/chromium-browser on config options.')
+            options['executablePath'] = '/usr/lib64/chromium-browser/chromium-browser'
+        }
+
+        return puppeteer.launch(options)
+    }
+
     async PDFGenerator(req: Request, res: Response) {
         try {
-            const options = {
-                headless: true,
-                args: [
-                    '--no-sandbox',
-                    '--disable-setuid-sandbox',
-                    '--disable-dev-shm-usage',
-                    '--disable-accelerated-2d-canvas',
-                    '--no-first-run',
-                    '--no-zygote',
-                    '--single-process',
-                    '--disable-gpu',
-                ],
-            }
-
-            if (isDockerContainer) {
-                console.log('App running under a container. Add /usr/bin/chromium-browser on config options.')
-                options['executablePath'] = '/usr/lib64/chromium-browser'
-            }
 
             const pageLoadConfig = this.getPageLoadConfig(req)
 
-            const browser = await puppeteer.launch(options);
+            const browser = await this.createBrowser();
             const page = await browser.newPage();
 
             if (pageLoadConfig.htmlBase64) {
