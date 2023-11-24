@@ -25,7 +25,6 @@ RUN yum install -y wget curl
 RUN yum -y update && yum clean all
 RUN yum -y install epel-release && yum clean all
 RUN yum -y install chromium nss freetype harfbuzz ca-certificates && yum clean all
-RUN yum -y install supervisor
 
 ENV PUPPETEER_DOCKER true
 
@@ -50,6 +49,5 @@ RUN tar xvf openjdk-19.0.1_linux-x64_bin.tar.gz
 RUN mv jdk-19.0.1/* "$JAVA_HOME"
 RUN rm -rf jdk-19.0.1
 
-COPY supervisord.conf /etc/
 COPY --from=builder /app/build/libs/pdf-generator-1.0.0-all.jar /app.jar
 

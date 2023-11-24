@@ -11,8 +11,6 @@ FROM pdf-server:latest
 
 WORKDIR /opt/app
 
-COPY supervisord.conf /etc/
-
 ENV PORT 8080
 ENV PDF_GENERATOR_SERVER_PORT 3100
 

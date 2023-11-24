@@ -49,7 +49,7 @@ class PdfGeneratorController {
                 HttpResponse.unprocessableEntity()
             }
         } catch (err: Exception) {
-            logger.error("Generating pdf from {} with error {}", url, err)
+            logger.error("Generating pdf from {} with error", url, err)
         }
         return HttpResponse.unprocessableEntity()
     }
