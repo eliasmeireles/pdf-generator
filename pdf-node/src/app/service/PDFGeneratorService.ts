@@ -14,7 +14,6 @@ class PDFGeneratorService {
             headless: true,
             args: [
                 '--no-sandbox',
-                '--window-size=1920,1080',
                 '--disable-setuid-sandbox',
                 '--disable-dev-shm-usage',
                 '--disable-accelerated-2d-canvas',
@@ -43,9 +42,7 @@ class PDFGeneratorService {
 
             if (pageLoadConfig.htmlBase64) {
                 const htmlContent = Buffer.from(pageLoadConfig.htmlBase64, 'base64').toString('utf8');
-                await page.goto('data:text/html;charset=UTF-8,' + encodeURI(htmlContent), {
-                    waitUntil: 'networkidle0' // Wait until the page is fully loaded
-                });
+                await page.setContent(htmlContent)
             } else if (pageLoadConfig.targetUrl) {
                 await page.goto(pageLoadConfig.targetUrl, {waitUntil: 'networkidle0'});
             } else {
