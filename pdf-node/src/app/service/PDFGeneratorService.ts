@@ -14,6 +14,7 @@ class PDFGeneratorService {
             headless: true,
             args: [
                 '--no-sandbox',
+                '--window-size=1920,1080',
                 '--disable-setuid-sandbox',
                 '--disable-dev-shm-usage',
                 '--disable-accelerated-2d-canvas',
