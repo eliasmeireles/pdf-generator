@@ -13,12 +13,8 @@ const myErrorFormat = winston.format.printf(({message}) => {
     return `{'timestamp': '${timestamp}', 'service':'pdf-node-server', 'level':'ERROR', 'meta': '${message}'}`
 })
 
-export  type LoggerLevel = {
-    level: 'INFO' | 'WARN' | 'ERROR',
-}
-
-const newrelicLogger = ({level}: LoggerLevel) => winston.createLogger({
-    level: level ?? 'INFO',
+const newrelicLogger = (level?: string) => winston.createLogger({
+    level: level ?? 'info',
     format: loggerFormat,
     transports: [
         new winston.transports.File({
@@ -42,7 +38,7 @@ exports.error = (message: string) => {
 }
 
 exports.newrelic = ({error, transactionSubType, message, level}: {
-    level: LoggerLevel,
+    level: string,
     transactionSubType: string,
     message: string,
     error?: any

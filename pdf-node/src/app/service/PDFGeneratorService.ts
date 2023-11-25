@@ -51,9 +51,9 @@ class PDFGeneratorService {
             } else {
                 res.status(400).send({error: 'Needs to set targetUrl or htmlBase64'});
                 logger.newrelic({
-                    level: 'ERROR',
-                    transactionSubType: 'pdf-generator-content-not-set',
+                    level: 'INFO',
                     message: 'Invalid request data',
+                    transactionSubType: 'pdf-generator-content-not-set',
                 })
                 return
             }
