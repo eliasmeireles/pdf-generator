@@ -78,7 +78,7 @@ class PDFGeneratorService {
                     res.status(400).send({error: 'Needs to set targetUrl or htmlBase64'});
                     return;
                 }
-                for (const ele of (_a = pageLoadConfig.requiredElements) !== null && _a !== void 0 ? _a : []) {
+                for (const ele of (_a = pageLoadConfig.requiredElementsIds) !== null && _a !== void 0 ? _a : []) {
                     yield page.waitForSelector(ele, {timeout: Number((_b = pageLoadConfig.elementsWaitTimeout) !== null && _b !== void 0 ? _b : 0)});
                 }
                 try {

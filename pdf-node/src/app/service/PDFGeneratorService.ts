@@ -1,36 +1,13 @@
-import {PageLoadConfig} from "../model/PageLoadConfig";
+import {CheckElementValue, PageLoadConfig} from "../model/PageLoadConfig";
 import {Request, Response} from 'express';
 
+import puppeteer, {Browser, ElementHandle, Page, PuppeteerLaunchOptions} from "puppeteer";
 
-import puppeteer, {Browser, PuppeteerLaunchOptions} from "puppeteer";
-const  logger =  require("../util/logger");
+const logger = require("../util/logger");
 
 const isDockerContainer = process.env.PUPPETEER_DOCKER
 
 class PDFGeneratorService {
-
-    createBrowser(): Promise<Browser> {
-        const options = {
-            headless: true,
-            args: [
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-dev-shm-usage',
-                '--disable-accelerated-2d-canvas',
-                '--no-first-run',
-                '--no-zygote',
-                '--single-process',
-                '--disable-gpu',
-            ],
-        } as PuppeteerLaunchOptions
-
-
-        if (isDockerContainer) {
-            options['executablePath'] = '/usr/lib64/chromium-browser/chromium-browser'
-        }
-
-        return puppeteer.launch(options)
-    }
 
     async PDFGenerator(req: Request, res: Response) {
         try {
@@ -55,25 +32,17 @@ class PDFGeneratorService {
                 return
             }
 
-            for (const ele of pageLoadConfig.requiredElements ?? []) {
-                await page.waitForSelector(ele, {timeout: Number(pageLoadConfig.elementsWaitTimeout ?? 0)});
+            for (const elementId of pageLoadConfig.requiredElementsIds ?? []) {
+                await page.waitForSelector(`#${elementId}`, {timeout: Number(pageLoadConfig.elementsWaitTimeout ?? 0)});
             }
 
-            try {
-                const lastElement = await page.evaluateHandle(() => document.body.lastElementChild);
-
-                const elementId = await page.evaluate(el => el.id, lastElement);
-                if (elementId && elementId.includes('SvgjsSvg')) {
-                    await page.evaluate(el => el.remove(), lastElement);
+            if (pageLoadConfig.checkElementsValue) {
+                for (let checkValueIsPresent of pageLoadConfig.checkElementsValue) {
+                    await this.checkElementWithValue(page, checkValueIsPresent);
                 }
-            } catch (error) {
-                logger.newrelic({
-                    level: 'ERROR',
-                    transactionSubType: 'pdf-generator-element-rm',
-                    message: 'Failed to remove element:',
-                    error: error
-                })
             }
+
+            await this.tryRemoveUnexpectedElement(page)
 
             const pdf = await page.pdf({format: pageLoadConfig.format ?? 'A4'});
 
@@ -84,7 +53,7 @@ class PDFGeneratorService {
             logger.newrelic({
                 level: 'INFO',
                 transactionSubType: 'pdf-generator-content-generated',
-                message: 'New PDF generated succesfful.',
+                message: 'New PDF generated successful.',
             })
         } catch (err) {
             logger.newrelic({
@@ -93,8 +62,61 @@ class PDFGeneratorService {
                 message: 'Failed to generate PDF',
                 error: err
             })
-            res.status(500).send({error: 'Failed to generate PDF'});
+            res.status(500).send({
+                message: err.message,
+                error: err,
+            });
         }
+    }
+
+    private async checkElementWithValue(page: Page, check: CheckElementValue): Promise<void> {
+        const element: ElementHandle | null = await page.$(`#${check.id}`);
+        const innerHTML: string | null = element ? await page.evaluate((el) => el.textContent, element) : null;
+
+        if (check.value !== innerHTML) {
+            throw new Error(`Expected value "${check.value}" in element with id "${check.id}" but not found`);
+        }
+    }
+
+    private async tryRemoveUnexpectedElement(page: Page): Promise<void> {
+        try {
+            const lastElement = await page.evaluateHandle(() => document.body.lastElementChild);
+
+            const elementId = await page.evaluate(el => el.id, lastElement);
+            if (elementId && elementId.includes('SvgjsSvg')) {
+                await page.evaluate(el => el.remove(), lastElement);
+            }
+        } catch (error) {
+            logger.newrelic({
+                level: 'ERROR',
+                transactionSubType: 'pdf-generator-element-rm',
+                message: 'Failed to remove element:',
+                error: error
+            })
+        }
+    }
+
+    private createBrowser(): Promise<Browser> {
+        const options = {
+            headless: true,
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-accelerated-2d-canvas',
+                '--no-first-run',
+                '--no-zygote',
+                '--single-process',
+                '--disable-gpu',
+            ],
+        } as PuppeteerLaunchOptions
+
+
+        if (isDockerContainer) {
+            options['executablePath'] = '/usr/lib64/chromium-browser/chromium-browser'
+        }
+
+        return puppeteer.launch(options)
     }
 
     getPageLoadConfig = (req: Request): PageLoadConfig =>
