@@ -1,0 +1,9 @@
+#!/bin/sh
+
+download() {
+    curl -k --location 'http://localhost:8656/api/pdf-generator?url=https%3A%2F%2Fgithub.com%2FSeleniumHQ%2Fselenium%2Fblob%2Ftrunk%2Fjava%2FCHANGELOG' --output "data.pdf"
+}
+
+for i in $(seq 1 1000); do
+  download "$i"
+done

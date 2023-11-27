@@ -16,6 +16,8 @@ class PdfGeneratorController {
 
     private val options = ChromeOptions()
     private val printOptions = PrintOptions()
+    private var drive: ChromeDriver
+
 
     init {
         options.addArguments("--no-sandbox")
@@ -25,21 +27,18 @@ class PdfGeneratorController {
 
         printOptions.orientation = PrintOptions.Orientation.LANDSCAPE
         printOptions.shrinkToFit = false
+        drive = ChromeDriver(options)
     }
 
     @Get
     @Produces(value = ["application/pdf"])
     fun summary(@Parameter url: String): HttpResponse<ByteArray> {
         LoggerFactory.getLogger(javaClass).info("Generating pdf from {}", url)
-
-        val drive = ChromeDriver(options)
-
         drive.run { get(url) }
 
         Thread.sleep(2000)
 
         val print = drive.print(printOptions)
-        drive.close()
         return HttpResponse.ok(OutputType.BYTES.convertFromBase64Png(print.content))
     }
 }
