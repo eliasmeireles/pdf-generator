@@ -74,7 +74,7 @@ class PDFGeneratorService {
         const innerHTML: string | null = element ? await page.evaluate((el) => el.textContent, element) : null;
 
         if (check.value !== innerHTML) {
-            throw new Error(`Expected value "${check.value}" in element with id "${check.id}" but not found`);
+            throw new Error(`Expected value [${check.value}] in element with id [${check.id}] but not found`);
         }
     }
 
